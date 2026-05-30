@@ -7,11 +7,22 @@ let isGameOver = false;
 let score = 0;
 let highScore = localStorage.getItem("pepeHighScore") || 0;
 
+// --- BILŽU IELĀDE ---
+const imgIet = new Image();
+imgIet.src = 'pepe_iet.png';
+
+const imgLec = new Image();
+imgLec.src = 'pepe_lec.png';
+
+const imgKrit = new Image();
+imgKrit.src = 'pepe_krit.png';
+// --------------------
+
 // Pepe (Spēlētāja objekts)
 const pepe = {
     x: 80,
     y: 250,
-    radius: 18,
+    radius: 20, // Palielināts rādiuss, lai labāk atbilstu bildes izmēram
     velocity: 0,
     gravity: 0.38,
     jump: -6.8
@@ -28,21 +39,18 @@ let pipeTimer = 0;
 canvas.addEventListener("click", () => handleInput());
 window.addEventListener("keydown", (e) => {
     if (e.code === "Space") {
-        e.preventDefault(); // Novērš lapas dabisko ritināšanu uz leju
+        e.preventDefault(); 
         handleInput();
     }
 });
 
 function handleInput() {
     if (!gameRunning && !isGameOver) {
-        // Palaiž spēli pirmo reizi
         gameRunning = true;
         loop();
     } else if (isGameOver) {
-        // Restartē spēli
         resetGame();
     } else {
-        // Lēciens gaisā
         pepe.velocity = pepe.jump;
     }
 }
@@ -74,75 +82,58 @@ function createPipe() {
 function drawBackground() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Vienkāršoti fona mākoņi vizuālajam dziļumam
     ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
     ctx.beginPath(); ctx.arc(120, 90, 35, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(155, 90, 45, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(310, 160, 40, 0, Math.PI * 2); ctx.fill();
 }
 
+// Funkcija, kas zīmē Pepi, izmantojot tavas bildes
 function drawPepe(x, y) {
-    // Pepes zaļā seja
-    ctx.beginPath();
-    ctx.arc(x, y, pepe.radius, 0, Math.PI * 2);
-    ctx.fillStyle = "#4caf50"; 
-    ctx.fill();
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = "#2e7d32";
-    ctx.stroke();
-    ctx.closePath();
-    
-    // Pepes lielā mēmu acs
-    ctx.fillStyle = "#fff";
-    ctx.beginPath();
-    ctx.arc(x + 6, y - 5, 7, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    
-    // Zīlīte
-    ctx.fillStyle = "#000";
-    ctx.beginPath();
-    ctx.arc(x + 8, y - 5, 2.5, 0, Math.PI * 2);
-    ctx.fill();
+    let currentImage = imgIet; // Noklusējuma bilde (iet/stāv)
 
-    // Lūpas/Smaids
-    ctx.beginPath();
-    ctx.arc(x + 4, y + 6, 8, 0, Math.PI, true);
-    ctx.strokeStyle = "#1b5e20";
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
+    // Ja Pepe kustas uz augšu (ātrums negatīvs), rādām "lec" bildi
+    if (pepe.velocity < -1) {
+        currentImage = imgLec;
+    } 
+    // Ja Pepe krīt uz leju (ātrums pozitīvs), rādām "krit" bildi
+    else if (pepe.velocity > 1) {
+        currentImage = imgKrit;
+    }
+
+    // Aprēķinām bildes izmēru un novietojumu ap spēlētāja centru
+    const size = pepe.radius * 2.5; 
+    const drawX = x - size / 2;
+    const drawY = y - size / 2;
+
+    // Zīmējam bildi uz ekrāna
+    ctx.drawImage(currentImage, drawX, drawY, size, size);
 }
 
 function drawPipes() {
     for (let i = pipes.length - 1; i >= 0; i--) {
         pipes[i].x -= pipeSpeed;
 
-        // Augšējais stabs (MrBeast rozā krāsa)
         ctx.fillStyle = "#e91e63"; 
         ctx.strokeStyle = "#880e4f";
         ctx.lineWidth = 3;
         ctx.fillRect(pipes[i].x, 0, pipeWidth, pipes[i].top);
         ctx.strokeRect(pipes[i].x, -5, pipeWidth, pipes[i].top + 5);
 
-        // Apakšējais stabs (MrBeast tirkīza zils)
         ctx.fillStyle = "#00bcd4"; 
         ctx.strokeStyle = "#006064";
         ctx.fillRect(pipes[i].x, canvas.height - pipes[i].bottom, pipeWidth, pipes[i].bottom);
         ctx.strokeRect(pipes[i].x, canvas.height - pipes[i].bottom, pipeWidth, pipes[i].bottom + 5);
 
-        // Sadursmju noteikšana (AABB + drošības buferis precizitātei)
         if (
-            pepe.x + pepe.radius - 3 > pipes[i].x && 
-            pepe.x - pepe.radius + 3 < pipes[i].x + pipeWidth
+            pepe.x + pepe.radius - 5 > pipes[i].x && 
+            pepe.x - pepe.radius + 5 < pipes[i].x + pipeWidth
         ) {
-            if (pepe.y - pepe.radius + 3 < pipes[i].top || pepe.y + pepe.radius - 3 > canvas.height - pipes[i].bottom) {
+            if (pepe.y - pepe.radius + 5 < pipes[i].top || pepe.y + pepe.radius - 5 > canvas.height - pipes[i].bottom) {
                 triggerGameOver();
             }
         }
 
-        // Punktu skaitīšana
         if (!pipes[i].passed && pipes[i].x + pipeWidth < pepe.x) {
             score++;
             pipes[i].passed = true;
@@ -152,7 +143,6 @@ function drawPipes() {
             }
         }
 
-        // Izdzēšam stabus, kas pametuši ekrānu
         if (pipes[i].x + pipeWidth < 0) {
             pipes.splice(i, 1);
         }
@@ -195,22 +185,18 @@ function triggerGameOver() {
     ctx.fillText("Nospied SPACE, lai spēlētu vēlreiz", canvas.width / 2, canvas.height / 2 + 100);
 }
 
-// Galvenais spēles cikls
 function loop() {
     if (!gameRunning) return;
 
     drawBackground();
 
-    // Fizikas kalkulācija
     pepe.velocity += pepe.gravity;
     pepe.y += pepe.velocity;
 
-    // Kritiena vai griestu pārbaude
     if (pepe.y + pepe.radius >= canvas.height || pepe.y - pepe.radius <= 0) {
         triggerGameOver();
     }
 
-    // Stabu ģenerēšana pēc laika
     pipeTimer++;
     if (pipeTimer >= 95) {
         createPipe();
@@ -224,7 +210,6 @@ function loop() {
     requestAnimationFrame(loop);
 }
 
-// Sākuma ekrāna iestatīšana
 function showStartScreen() {
     drawBackground();
     drawPepe(pepe.x, pepe.y);
@@ -242,5 +227,5 @@ function showStartScreen() {
     ctx.fillText("Palīdzi Pepei izbēgt no izaicinājuma!", canvas.width / 2, canvas.height / 2 + 25);
 }
 
-// Inicializē pirmo skatu
+// Palaist sākuma skatu
 showStartScreen();
