@@ -10,18 +10,29 @@ let upgradeLecLimenis = parseInt(localStorage.getItem("upLecLimenis")) || 1;
 let upgradeVartiLimenis = parseInt(localStorage.getItem("upVartiLimenis")) || 1;
 let upgradePasivsLimenis = parseInt(localStorage.getItem("upPasivsLimenis")) || 0;
 let upgradeDmgSecLimenis = parseInt(localStorage.getItem("upDmgSecLimenis")) || 0;
-let hasAutoJumper = localStorage.getItem("hasAutoJumper") === "true"; // Jaunais mainīgais (true/false)
+let hasAutoJumper = localStorage.getItem("hasAutoJumper") === "true";
 
-// --- UZLABOJUMU FUNKCIJAS ---
-function gūtPunktusParLecienu() { return upgradeLecLimenis; }
-function gūtDamageParVartiem() { return upgradeVartiLimenis * 5 - 4; } 
-function gūtPasivoZeltu() { return upgradePasivsLimenis * 2; } 
-function gūtPasivoDamage() { return upgradeDmgSecLimenis * 15; } 
+// --- UZLABOJUMU FUNKCIJAS (JAUNAIS, JAUDAIS BALANSS ĀTRAI UZVARAI) ---
+function gūtPunktusParLecienu() { 
+    return upgradeLecLimenis * 15; // Katrs klikšķis/leciens dod daudz vairāk zelta
+}
+function gūtDamageParVartiem() { 
+    // Ar katru līmeni damage aug eksponenciāli (Lvl 5+ jau atņems miljonus)
+    return Math.floor(Math.pow(upgradeVartiLimenis, 2.5) * 50000); 
+} 
+function gūtPasivoZeltu() { 
+    return upgradePasivsLimenis * 150; // Raktuves dod nopietnu naudu sekundē
+} 
+function gūtPasivoDamage() { 
+    // Pasīvais uzbrukums ātri sāk dzēst miljonus sekotāju sekundē
+    return upgradeDmgSecLimenis * 350000; 
+} 
 
-function cenasLec() { return upgradeLecLimenis * 50; }
-function cenasVarti() { return upgradeVartiLimenis * 150; }
-function cenasPasivs() { return (upgradePasivsLimenis + 1) * 100; }
-function canvasCenasDmgSec() { return (upgradeDmgSecLimenis + 1) * 200; }
+// --- VEIKALA CENAS ---
+function cenasLec() { return upgradeLecLimenis * 60; }
+function cenasVarti() { return upgradeVartiLimenis * 180; }
+function cenasPasivs() { return (upgradePasivsLimenis + 1) * 120; }
+function cenasDmgSec() { return (upgradeDmgSecLimenis + 1) * 250; }
 const cenaJumper = 1000000; // Auto Jumper cena fiksēta uz 1M
 
 // --- BILŽU IELĀDE ---
@@ -84,7 +95,7 @@ btnPasivs.addEventListener("click", () => {
     if (points >= cena) { points -= cena; upgradePasivsLimenis++; saglabatDatus(); atjaunotVeikaluUI(); }
 });
 btnDmgSec.addEventListener("click", () => {
-    let cena = canvasCenasDmgSec();
+    let cena = cenasDmgSec();
     if (points >= cena) { points -= cena; upgradeDmgSecLimenis++; saglabatDatus(); atjaunotVeikaluUI(); }
 });
 
@@ -105,7 +116,7 @@ function PepeLec() {
     atjaunotVeikaluUI();
 }
 
-// --- PASĪVAIS TAIMERIS ---
+// --- PASĪVAIS TAIMERIS (Zelts un Damage ik pēc 1 sekundes) ---
 setInterval(() => {
     if (beastSubs > 0) {
         points += gūtPasivoZeltu();
@@ -138,12 +149,12 @@ function atjaunotVeikaluUI() {
     btnPasivs.innerHTML = `Uzlabot (Lvl ${upgradePasivsLimenis})<br>Cena: ${cenasPasivs()}`;
     btnPasivs.className = points >= cenasPasivs() ? "shop-btn active-pasivs" : "shop-btn";
 
-    btnDmgSec.innerHTML = `Uzlabot (Lvl ${upgradeDmgSecLimenis})<br>Cena: ${canvasCenasDmgSec()}`;
-    btnDmgSec.className = points >= canvasCenasDmgSec() ? "shop-btn active-dmg-sec" : "shop-btn";
+    btnDmgSec.innerHTML = `Uzlabot (Lvl ${upgradeDmgSecLimenis})<br>Cena: ${cenasDmgSec()}`;
+    btnDmgSec.className = points >= cenasDmgSec() ? "shop-btn active-dmg-sec" : "shop-btn";
 
-    // Auto Jumper pogas stāvoklis vizuāli
+    // Auto Jumper vizuālais statuss
     if (hasAutoJumper) {
-        btnJumper.innerHTML = "NOPIRKTS AKTIIVS";
+        btnJumper.innerHTML = "NOPIRKTS AKTĪVS";
         btnJumper.className = "shop-btn owned";
         statJumper.innerText = "AKTĪVS";
         statJumper.style.color = "#4caf50";
@@ -187,6 +198,7 @@ function drawPipes() {
         ctx.fillStyle = "#e91e63"; ctx.fillRect(pipes[i].x, 0, pipeWidth, pipes[i].top);
         ctx.fillStyle = "#00bcd4"; ctx.fillRect(pipes[i].x, canvas.height - pipes[i].bottom, pipeWidth, pipes[i].bottom);
 
+        // Ja ietriecas stabā: Sods (MrBeast atgūst subus)
         if (pepe.x + pepe.radius - 5 > pipes[i].x && pepe.x - pepe.radius + 5 < pipes[i].x + pipeWidth) {
             if (pepe.y - pepe.radius + 5 < pipes[i].top || pepe.y + pepe.radius - 5 > canvas.height - pipes[i].bottom) {
                 if (!pipes[i].passed) {
@@ -200,6 +212,7 @@ function drawPipes() {
             }
         }
 
+        // Veiksmīga iziešana cauri vārtiem
         if (!pipes[i].passed && pipes[i].x + pipeWidth < pepe.x) {
             beastSubs -= gūtDamageParVartiem();
             if (beastSubs < 0) beastSubs = 0;
@@ -237,13 +250,12 @@ function loop() {
 
     pepe.velocity += pepe.gravity; pepe.y += pepe.velocity;
 
-    // --- JAUNĀ AUTO JUMPER LOGIKA ---
-    // Ja uzlabojums ir nopirkts un Pepe tuvojas zemei (atlikuši 45 pikseļi vai mazāk)
+    // --- AUTO JUMPER LOGIKA ---
     if (hasAutoJumper && pepe.y + pepe.radius >= canvas.height - 45 && pepe.velocity > 0) {
-        PepeLec(); // Izsauc lēcienu automātiski!
+        PepeLec(); 
     }
 
-    // Drošības barjera parastajai fizikai (ja nav nopirkts uzlabojums)
+    // Drošības barjera
     if (pepe.y + pepe.radius >= canvas.height) {
         pepe.y = canvas.height - pepe.radius; pepe.velocity = pepe.jump;
     }
