@@ -73,10 +73,9 @@ canvas {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    max-height: 600px; /* Pielāgots izmērs, lai ietilptu visas 5 pogas */
+    max-height: 600px;
 }
 
-/* Ritināšanas joslas dizains veikalam */
 .shop-panel::-webkit-scrollbar {
     width: 6px;
 }
@@ -85,8 +84,43 @@ canvas {
     border-radius: 4px;
 }
 
+/* VALODAS UN RESET DIZAINS */
+.shop-top-bar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 10px;
+}
+
+#lang-select {
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+    padding: 5px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    flex: 1;
+}
+
+.reset-btn {
+    background: #c62828;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.reset-btn:hover {
+    background: #e53935;
+}
+
 .shop-panel h2 {
-    font-size: 16px;
+    font-size: 15px;
     text-align: center;
     color: #ffd700;
     margin-bottom: 10px;
@@ -95,7 +129,7 @@ canvas {
 }
 
 .wallet {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: bold;
     color: #ffd700;
     text-align: center;
@@ -141,8 +175,8 @@ canvas {
 .shop-btn.active-varti { background: #00bcd4; }
 .shop-btn.active-pasivs { background: #9c27b0; }
 .shop-btn.active-dmg-sec { background: #ff5722; }
-.shop-btn.active-jumper { background: #e91e63; } /* Koši rozā pogai */
-.shop-btn.owned { background: #2e7d32; cursor: default; } /* Zaļa, kad nopirkts */
+.shop-btn.active-jumper { background: #e91e63; }
+.shop-btn.owned { background: #2e7d32; cursor: default; }
 
 .shop-btn:hover {
     filter: brightness(1.2);
