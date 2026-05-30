@@ -1,33 +1,27 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// --- SPĒLES PROGRESA DATI (Saglabājas pārlūkā) ---
+// --- SPĒLES PROGRESA DATI ---
 let points = parseInt(localStorage.getItem("pepePoints")) || 0;
 let beastSubs = parseInt(localStorage.getItem("beastSubs")) || 491000000;
+const maxBeastSubs = 491000000;
 
-// Uzlabojumu līmeņi
 let upgradeLecLimenis = parseInt(localStorage.getItem("upLecLimenis")) || 1;
 let upgradeVartiLimenis = parseInt(localStorage.getItem("upVartiLimenis")) || 1;
 
-// --- UZLABOJUMU APRĒĶINI ---
-// Cik punktus dod 1 lēciens
+// --- UZLABOJUMU FUNKCIJAS ---
 function gūtPunktusParLecienu() { return upgradeLecLimenis; }
-// Cik subus atņem vieni vārti
-function gūtDamageParVartiem() { return upgradeVartiLimenis * 5 - 4; } // Lvl 1 = 1, Lvl 2 = 6, Lvl 3 = 11...
-// Uzlabojumu cenas
+function gūtDamageParVartiem() { return upgradeVartiLimenis * 5 - 4; } 
 function cenasLec() { return upgradeLecLimenis * 50; }
 function cenasVarti() { return upgradeVartiLimenis * 150; }
-
-// Spēles stāvokļi
-let gameRunning = false;
-let isGameOver = false;
 
 // --- BILŽU IELĀDE ---
 const imgIet = new Image(); imgIet.src = 'pepe_iet.png';
 const imgLec = new Image(); imgLec.src = 'pepe_lec.png';
 const imgKrit = new Image(); imgKrit.src = 'pepe_krit.png';
+const imgBeast = new Image(); imgBeast.src = 'mrbeast_seja.png'; // <- TAVA JAUNĀ BILDE
 
-// Pepe
+// Pepe fizika
 const pepe = {
     x: 80,
     y: 250,
@@ -44,82 +38,48 @@ const pipeGap = 160;
 const pipeSpeed = 3;
 let pipeTimer = 0;
 
-// Vadība un klikšķi uz veikala pogām
-canvas.addEventListener("click", (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
+// Dom elementi veikalam
+const goldCountEl = document.getElementById("gold-count");
+const btnLec = document.getElementById("btn-upgrade-lec");
+const btnVarti = document.getElementById("btn-upgrade-varti");
+const statGold = document.getElementById("stat-gold");
+const statDmg = document.getElementById("stat-dmg");
 
-    if (!gameRunning && !isGameOver) {
-        // Pārbauda vai uzklikšķināja uz uzlabojumu pogām sākuma ekrānā
-        if (clickX >= 30 && clickX <= 180 && clickY >= 420 && clickY <= 470) {
-            PirktLecienaUzlabojumu();
-        } else if (clickX >= 220 && clickX <= 370 && clickY >= 420 && clickY <= 470) {
-            PirktVartuUzlabojumu();
-        } else if (clickY < 400) {
-            // Ja noklikšķina augstāk, sākas spēle
-            SaktSpeli();
-        }
-    } else if (isGameOver) {
-        resetGame();
-    } else {
-        // Spēles laikā - lēciens
+// Vadība
+canvas.addEventListener("click", () => PepeLec());
+window.addEventListener("keydown", (e) => {
+    if (e.code === "Space") {
+        e.preventDefault(); 
         PepeLec();
     }
 });
 
-window.addEventListener("keydown", (e) => {
-    if (e.code === "Space") {
-        e.preventDefault(); 
-        if (!gameRunning && !isGameOver) {
-            SaktSpeli();
-        } else if (isGameOver) {
-            resetGame();
-        } else {
-            PepeLec();
-        }
-    }
-});
-
-function PepeLec() {
-    pepe.velocity = pepe.jump;
-    points += gūtPunktusParLecienu(); // Katrs lēciens dod punktus!
-    saglabatDatus();
-}
-
-function SaktSpeli() {
-    gameRunning = true;
-    loop();
-}
-
-function resetGame() {
-    pepe.y = 250;
-    pepe.velocity = 0;
-    pipes = [];
-    pipeTimer = 0;
-    isGameOver = false;
-    gameRunning = true;
-    loop();
-}
-
-function PirktLecienaUzlabojumu() {
+// Veikala pogu funkcijas
+btnLec.addEventListener("click", () => {
     let cena = cenasLec();
     if (points >= cena) {
         points -= cena;
         upgradeLecLimenis++;
         saglabatDatus();
-        showStartScreen();
+        atjaunotVeikaluUI();
     }
-}
+});
 
-function PirktVartuUzlabojumu() {
+btnVarti.addEventListener("click", () => {
     let cena = cenasVarti();
     if (points >= cena) {
         points -= cena;
         upgradeVartiLimenis++;
         saglabatDatus();
-        showStartScreen();
+        atjaunotVeikaluUI();
     }
+});
+
+function PepeLec() {
+    pepe.velocity = pepe.jump;
+    points += gūtPunktusParLecienu();
+    saglabatDatus();
+    atjaunotVeikaluUI();
 }
 
 function saglabatDatus() {
@@ -129,18 +89,40 @@ function saglabatDatus() {
     localStorage.setItem("upVartiLimenis", upgradeVartiLimenis);
 }
 
+function atjaunotVeikaluUI() {
+    goldCountEl.innerText = formatSkaitlis(points);
+    
+    // Leciena poga
+    let cLec = cenasLec();
+    btnLec.innerHTML = `Uzlabot (Lvl ${upgradeLecLimenis})<br>Cena: ${cLec}`;
+    if (points >= cLec) {
+        btnLec.className = "shop-btn active-lec";
+    } else {
+        btnLec.className = "shop-btn";
+    }
+
+    // Vārtu poga
+    let cVarti = cenasVarti();
+    btnVarti.innerHTML = `Uzlabot (Lvl ${upgradeVartiLimenis})<br>Cena: ${cVarti}`;
+    if (points >= cVarti) {
+        btnVarti.className = "shop-btn active-varti";
+    } else {
+        btnVarti.className = "shop-btn";
+    }
+
+    statGold.innerText = gūtPunktusParLecienu();
+    statDmg.innerText = formatSkaitlis(gūtDamageParVartiem());
+}
+
 function createPipe() {
     let minHeight = 60;
-    let maxHeight = canvas.height - pipeGap - 60;
+    let maxHeight = canvas.height - pipeGap - 120; // Atstājam vietu apakšā drošībai
     let topHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
     pipes.push({ x: canvas.width, top: topHeight, bottom: canvas.height - (topHeight + pipeGap), passed: false });
 }
 
 function drawBackground() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-    ctx.beginPath(); ctx.arc(120, 90, 35, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(310, 160, 40, 0, Math.PI * 2); ctx.fill();
 }
 
 function drawPepe(x, y) {
@@ -156,74 +138,95 @@ function drawPipes() {
     for (let i = pipes.length - 1; i >= 0; i--) {
         pipes[i].x -= pipeSpeed;
 
-        // Vārti
+        // Stabu zīmēšana
         ctx.fillStyle = "#e91e63"; ctx.fillRect(pipes[i].x, 0, pipeWidth, pipes[i].top);
         ctx.fillStyle = "#00bcd4"; ctx.fillRect(pipes[i].x, canvas.height - pipes[i].bottom, pipeWidth, pipes[i].bottom);
 
-        // Sadursme
+        // --- NAV ZAUDĒŠANAS ---
+        // Ja Pepe pieskaras stābam, stabs pazūd un nekas nebeidzas!
         if (pepe.x + pepe.radius - 5 > pipes[i].x && pepe.x - pepe.radius + 5 < pipes[i].x + pipeWidth) {
             if (pepe.y - pepe.radius + 5 < pipes[i].top || pepe.y + pepe.radius - 5 > canvas.height - pipes[i].bottom) {
-                triggerGameOver();
+                // Vizuāls efekts: stabs tiek pārbīdīts uz aizmuguri, lai Pepe iesprūstot nezaudē ritmu
+                pipes[i].x = -100; 
             }
         }
 
         // Iziešana cauri vārtiem
         if (!pipes[i].passed && pipes[i].x + pipeWidth < pepe.x) {
-            let dmg = gūtDamageParVartiem();
-            beastSubs -= dmg;
+            beastSubs -= gūtDamageParVartiem();
             if (beastSubs < 0) beastSubs = 0;
             pipes[i].passed = true;
             saglabatDatus();
+            atjaunotVeikaluUI();
         }
 
         if (pipes[i].x + pipeWidth < 0) pipes.splice(i, 1);
     }
 }
 
+// ZĪMĒJAM MRBEAST BOSS UN HP JOSLU
+function drawMrBeastBoss() {
+    const bossX = canvas.width - 110;
+    const bossY = 70;
+    const bossSize = 90;
+
+    // 1. Uzzīmē MrBeast seju
+    ctx.drawImage(imgBeast, bossX, bossY, bossSize, bossSize);
+
+    // 2. HP Joslas fons (pelēks)
+    const hpWidth = 140;
+    const hpHeight = 14;
+    const hpX = canvas.width - 160;
+    const hpY = bossY - 25;
+
+    ctx.fillStyle = "#333";
+    ctx.fillRect(hpX, hpY, hpWidth, hpHeight);
+
+    // 3. HP Joslas aizpildījums (sarkans, atkarīgs no atlikušajiem subs)
+    const subProcents = beastSubs / maxBeastSubs;
+    ctx.fillStyle = "#ff1744";
+    ctx.fillRect(hpX, hpY, hpWidth * subProcents, hpHeight);
+
+    // HP rāmis
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(hpX, hpY, hpWidth, hpHeight);
+
+    // 4. Teksts virs HP joslas (Subs kā HP skaitlis)
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 11px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(formatSkaitlis(beastSubs) + " SUBS", hpX + hpWidth / 2, hpY - 5);
+}
+
 function formatSkaitlis(num) {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
-function drawUI() {
-    // Spēlētāja punkti (Nauda)
-    ctx.fillStyle = "#ffd700"; ctx.font = "bold 18px Arial"; ctx.textAlign = "left";
-    ctx.fillText("Zelts: " + formatSkaitlis(points), 20, 40);
-    
-    // MrBeast subs skaitītājs pa vidu
-    ctx.fillStyle = "#ff4a4a"; ctx.font = "bold 16px Arial"; ctx.textAlign = "right";
-    ctx.fillText("MrBeast Subs: " + formatSkaitlis(beastSubs), canvas.width - 20, 40);
-}
-
-function triggerGameOver() {
-    gameRunning = false; isGameOver = true;
-    ctx.fillStyle = "rgba(0, 0, 0, 0.85)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "#ff4a4a"; ctx.font = "bold 26px Arial"; ctx.textAlign = "center";
-    ctx.fillText("TU FINIŠĒJI!", canvas.width / 2, canvas.height / 2 - 20);
-
-    ctx.fillStyle = "#fff"; ctx.font = "16px Arial";
-    ctx.fillText("MrBeast atlikuši: " + formatSkaitlis(beastSubs) + " sub", canvas.width / 2, canvas.height / 2 + 20);
-    ctx.fillText("Tev ir: " + formatSkaitlis(points) + " zelts", canvas.width / 2, canvas.height / 2 + 50);
-
-    ctx.fillStyle = "#aaa"; ctx.fillText("Noklikšķini, lai mēģinātu atkal", canvas.width / 2, canvas.height / 2 + 110);
-}
-
 function loop() {
-    if (!gameRunning) return;
     drawBackground();
 
-    pepe.velocity += pepe.gravity; pepe.y += pepe.velocity;
-    if (pepe.y + pepe.radius >= canvas.height || pepe.y - pepe.radius <= 0) triggerGameOver();
+    // Pepe fizika (Arī ja nokrīt zemē, viņš vienkārši atlec atpakaļ, spēle nebeidzas)
+    pepe.velocity += pepe.gravity;
+    pepe.y += pepe.velocity;
+
+    if (pepe.y + pepe.radius >= canvas.height) {
+        pepe.y = canvas.height - pepe.radius;
+        pepe.velocity = pepe.jump; // Automātiski uzlec augšā, ja nokrīt
+    }
+    if (pepe.y - pepe.radius <= 0) {
+        pepe.y = pepe.radius;
+        pepe.velocity = 0;
+    }
 
     pipeTimer++;
     if (pipeTimer >= 95) { createPipe(); pipeTimer = 0; }
 
     drawPipes();
+    drawMrBeastBoss(); // Uzzīmē bosu un viņa HP
     drawPepe(pepe.x, pepe.y);
-    drawUI();
 
     if (beastSubs <= 0) {
-        gameRunning = false;
         Uzvara();
     } else {
         requestAnimationFrame(loop);
@@ -231,46 +234,13 @@ function loop() {
 }
 
 function Uzvara() {
-    ctx.fillStyle = "rgba(0,0,0,0.9)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#4caf50"; ctx.font = "bold 32px Arial"; ctx.textAlign = "center";
-    ctx.fillText("PEPE UZVARĒJA!", canvas.width / 2, canvas.height / 2 - 20);
+    ctx.fillText("PEPE UZVARĒJA!", canvas.width / 2, canvas.height / 2);
     ctx.fillStyle = "#fff"; ctx.font = "16px Arial";
-    ctx.fillText("MrBeast zaudēja visus sekotājus!", canvas.width / 2, canvas.height / 2 + 20);
+    ctx.fillText("MrBeast zaudēja visus 491M sekotājus!", canvas.width / 2, canvas.height / 2 + 35);
 }
 
-function showStartScreen() {
-    drawBackground();
-    drawPepe(pepe.x, pepe.y);
-    drawUI();
-    
-    ctx.fillStyle = "rgba(0, 0, 0, 0.6)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.font = "bold 20px Arial";
-    ctx.fillText("SPIED ŠEIT VAI SPACE, LAI SĀKTU", canvas.width / 2, 180);
-    
-    // --- VEIKALA GRAFIKA ---
-    ctx.fillStyle = "rgba(255,255,255,0.15)"; ctx.fillRect(15, 330, 370, 250);
-    ctx.fillStyle = "#ffd700"; ctx.font = "bold 18px Arial"; ctx.fillText("UPGRADES (VEIKALS)", canvas.width / 2, 360);
-
-    // 1. Poga: Lēciena uzlabojums
-    ctx.fillStyle = points >= cinemasLec() ? "#4caf50" : "#555";
-    ctx.fillRect(30, 420, 150, 50);
-    ctx.fillStyle = "#fff"; ctx.font = "12px Arial";
-    ctx.fillText("Vairāk Zelta par lecienu", 105, 400);
-    ctx.fillText("BUY (Lvl " + upgradeLecLimenis + ")", 105, 440);
-    ctx.fillStyle = "#ffd700"; ctx.fillText("Cena: " + cenasLec(), 105, 460);
-
-    // 2. Poga: Vārtu uzlabojums
-    ctx.fillStyle = points >= cenasVarti() ? "#00bcd4" : "#555";
-    ctx.fillRect(220, 420, 150, 50);
-    ctx.fillStyle = "#fff"; ctx.font = "12px Arial";
-    ctx.fillText("Vairāk Sub Noņemšanas", 295, 400);
-    ctx.fillText("BUY (Lvl " + upgradeVartiLimenis + ")", 295, 440);
-    ctx.fillStyle = "#ffd700"; ctx.fillText("Cena: " + cenasVarti(), 295, 460);
-    
-    // Info par spēku
-    ctx.fillStyle = "#aaa"; ctx.font = "11px Arial";
-    ctx.fillText("Lēciens dod: +" + gūtPunktusParLecienu() + " zeltu | Vārti noņem: -" + gūtDamageParVartiem() + " subs", canvas.width / 2, 510);
-}
-
-showStartScreen();
+// Palaiž spēli un sakārto veikalu
+atjaunotVeikaluUI();
+loop();
