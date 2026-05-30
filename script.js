@@ -9,18 +9,20 @@ const maxBeastSubs = 491000000;
 let upgradeLecLimenis = parseInt(localStorage.getItem("upLecLimenis")) || 1;
 let upgradeVartiLimenis = parseInt(localStorage.getItem("upVartiLimenis")) || 1;
 let upgradePasivsLimenis = parseInt(localStorage.getItem("upPasivsLimenis")) || 0;
-let upgradeDmgSecLimenis = parseInt(localStorage.getItem("upDmgSecLimenis")) || 0; // Jaunais līmenis
+let upgradeDmgSecLimenis = parseInt(localStorage.getItem("upDmgSecLimenis")) || 0;
+let hasAutoJumper = localStorage.getItem("hasAutoJumper") === "true"; // Jaunais mainīgais (true/false)
 
 // --- UZLABOJUMU FUNKCIJAS ---
 function gūtPunktusParLecienu() { return upgradeLecLimenis; }
 function gūtDamageParVartiem() { return upgradeVartiLimenis * 5 - 4; } 
 function gūtPasivoZeltu() { return upgradePasivsLimenis * 2; } 
-function gūtPasivoDamage() { return upgradeDmgSecLimenis * 15; } // Katrs līmenis atņem 15 subs sekundē
+function gūtPasivoDamage() { return upgradeDmgSecLimenis * 15; } 
 
 function cenasLec() { return upgradeLecLimenis * 50; }
 function cenasVarti() { return upgradeVartiLimenis * 150; }
 function cenasPasivs() { return (upgradePasivsLimenis + 1) * 100; }
-function cenasDmgSec() { return (upgradeDmgSecLimenis + 1) * 200; } // Jaunā cena
+function canvasCenasDmgSec() { return (upgradeDmgSecLimenis + 1) * 200; }
+const cenaJumper = 1000000; // Auto Jumper cena fiksēta uz 1M
 
 // --- BILŽU IELĀDE ---
 const imgIet = new Image(); imgIet.src = 'pepe_iet.png';
@@ -51,11 +53,13 @@ const btnLec = document.getElementById("btn-upgrade-lec");
 const btnVarti = document.getElementById("btn-upgrade-varti");
 const btnPasivs = document.getElementById("btn-upgrade-pasivs");
 const btnDmgSec = document.getElementById("btn-upgrade-dmg-sec");
+const btnJumper = document.getElementById("btn-upgrade-jumper");
 
 const statGold = document.getElementById("stat-gold");
 const statDmg = document.getElementById("stat-dmg");
 const statPasivs = document.getElementById("stat-pasivs");
 const statDmgSec = document.getElementById("stat-dmg-sec");
+const statJumper = document.getElementById("stat-jumper");
 
 // Vadība
 canvas.addEventListener("click", () => PepeLec());
@@ -66,25 +70,32 @@ window.addEventListener("keydown", (e) => {
     }
 });
 
-// Veikala uzlabojumu pogas
+// Veikala pogas
 btnLec.addEventListener("click", () => {
     let cena = cenasLec();
     if (points >= cena) { points -= cena; upgradeLecLimenis++; saglabatDatus(); atjaunotVeikaluUI(); }
 });
-
 btnVarti.addEventListener("click", () => {
     let cena = cenasVarti();
     if (points >= cena) { points -= cena; upgradeVartiLimenis++; saglabatDatus(); atjaunotVeikaluUI(); }
 });
-
 btnPasivs.addEventListener("click", () => {
     let cena = cenasPasivs();
     if (points >= cena) { points -= cena; upgradePasivsLimenis++; saglabatDatus(); atjaunotVeikaluUI(); }
 });
-
 btnDmgSec.addEventListener("click", () => {
-    let cena = cenasDmgSec();
+    let cena = canvasCenasDmgSec();
     if (points >= cena) { points -= cena; upgradeDmgSecLimenis++; saglabatDatus(); atjaunotVeikaluUI(); }
+});
+
+// Auto Jumper pogas darbība
+btnJumper.addEventListener("click", () => {
+    if (!hasAutoJumper && points >= cenaJumper) {
+        points -= cenaJumper;
+        hasAutoJumper = true;
+        saglabatDatus();
+        atjaunotVeikaluUI();
+    }
 });
 
 function PepeLec() {
@@ -94,16 +105,12 @@ function PepeLec() {
     atjaunotVeikaluUI();
 }
 
-// --- PASĪVAIS TAIMERIS (Zelts un Damage ik pēc 1 sekundes) ---
+// --- PASĪVAIS TAIMERIS ---
 setInterval(() => {
     if (beastSubs > 0) {
-        // 1. Pieskaita pasīvo zeltu
         points += gūtPasivoZeltu();
-
-        // 2. Atņem pasīvos subus MrBeastam
         beastSubs -= gūtPasivoDamage();
         if (beastSubs < 0) beastSubs = 0;
-
         saglabatDatus();
         atjaunotVeikaluUI();
     }
@@ -116,30 +123,36 @@ function saglabatDatus() {
     localStorage.setItem("upVartiLimenis", upgradeVartiLimenis);
     localStorage.setItem("upPasivsLimenis", upgradePasivsLimenis);
     localStorage.setItem("upDmgSecLimenis", upgradeDmgSecLimenis);
+    localStorage.setItem("hasAutoJumper", hasAutoJumper);
 }
 
 function atjaunotVeikaluUI() {
     goldCountEl.innerText = formatSkaitlis(points);
     
-    // Leciena poga
-    let cLec = cenasLec();
-    btnLec.innerHTML = `Uzlabot (Lvl ${upgradeLecLimenis})<br>Cena: ${cLec}`;
-    btnLec.className = points >= cLec ? "shop-btn active-lec" : "shop-btn";
+    btnLec.innerHTML = `Uzlabot (Lvl ${upgradeLecLimenis})<br>Cena: ${cenasLec()}`;
+    btnLec.className = points >= cenasLec() ? "shop-btn active-lec" : "shop-btn";
 
-    // Vārtu poga
-    let cVarti = cenasVarti();
-    btnVarti.innerHTML = `Uzlabot (Lvl ${upgradeVartiLimenis})<br>Cena: ${cVarti}`;
-    btnVarti.className = points >= cVarti ? "shop-btn active-varti" : "shop-btn";
+    btnVarti.innerHTML = `Uzlabot (Lvl ${upgradeVartiLimenis})<br>Cena: ${cenasVarti()}`;
+    btnVarti.className = points >= cenasVarti() ? "shop-btn active-varti" : "shop-btn";
 
-    // Pasīvā zelta poga
-    let cPasivs = cenasPasivs();
-    btnPasivs.innerHTML = `Uzlabot (Lvl ${upgradePasivsLimenis})<br>Cena: ${cPasivs}`;
-    btnPasivs.className = points >= cPasivs ? "shop-btn active-pasivs" : "shop-btn";
+    btnPasivs.innerHTML = `Uzlabot (Lvl ${upgradePasivsLimenis})<br>Cena: ${cenasPasivs()}`;
+    btnPasivs.className = points >= cenasPasivs() ? "shop-btn active-pasivs" : "shop-btn";
 
-    // Pasīvā damage poga
-    let cDmgSec = cenasDmgSec();
-    btnDmgSec.innerHTML = `Uzlabot (Lvl ${upgradeDmgSecLimenis})<br>Cena: ${cDmgSec}`;
-    btnDmgSec.className = points >= cDmgSec ? "shop-btn active-dmg-sec" : "shop-btn";
+    btnDmgSec.innerHTML = `Uzlabot (Lvl ${upgradeDmgSecLimenis})<br>Cena: ${canvasCenasDmgSec()}`;
+    btnDmgSec.className = points >= canvasCenasDmgSec() ? "shop-btn active-dmg-sec" : "shop-btn";
+
+    // Auto Jumper pogas stāvoklis vizuāli
+    if (hasAutoJumper) {
+        btnJumper.innerHTML = "NOPIRKTS AKTIIVS";
+        btnJumper.className = "shop-btn owned";
+        statJumper.innerText = "AKTĪVS";
+        statJumper.style.color = "#4caf50";
+    } else {
+        btnJumper.innerHTML = `PIRKT<br>Cena: ${formatSkaitlis(cenaJumper)}`;
+        btnJumper.className = points >= cenaJumper ? "shop-btn active-jumper" : "shop-btn";
+        statJumper.innerText = "NAV NOPIRKTS";
+        statJumper.style.color = "#ff4a4a";
+    }
 
     statGold.innerText = gūtPunktusParLecienu();
     statDmg.innerText = formatSkaitlis(gūtDamageParVartiem());
@@ -174,10 +187,8 @@ function drawPipes() {
         ctx.fillStyle = "#e91e63"; ctx.fillRect(pipes[i].x, 0, pipeWidth, pipes[i].top);
         ctx.fillStyle = "#00bcd4"; ctx.fillRect(pipes[i].x, canvas.height - pipes[i].bottom, pipeWidth, pipes[i].bottom);
 
-        // Kļūdas sadursme: Sods (MrBeast saņem atpakaļ subs)
         if (pepe.x + pepe.radius - 5 > pipes[i].x && pepe.x - pepe.radius + 5 < pipes[i].x + pipeWidth) {
             if (pepe.y - pepe.radius + 5 < pipes[i].top || pepe.y + pepe.radius - 5 > canvas.height - pipes[i].bottom) {
-                
                 if (!pipes[i].passed) {
                     beastSubs += gūtDamageParVartiem();
                     if (beastSubs > maxBeastSubs) beastSubs = maxBeastSubs; 
@@ -189,7 +200,6 @@ function drawPipes() {
             }
         }
 
-        // Veiksmīga iziešana cauri vārtiem
         if (!pipes[i].passed && pipes[i].x + pipeWidth < pepe.x) {
             beastSubs -= gūtDamageParVartiem();
             if (beastSubs < 0) beastSubs = 0;
@@ -227,6 +237,13 @@ function loop() {
 
     pepe.velocity += pepe.gravity; pepe.y += pepe.velocity;
 
+    // --- JAUNĀ AUTO JUMPER LOGIKA ---
+    // Ja uzlabojums ir nopirkts un Pepe tuvojas zemei (atlikuši 45 pikseļi vai mazāk)
+    if (hasAutoJumper && pepe.y + pepe.radius >= canvas.height - 45 && pepe.velocity > 0) {
+        PepeLec(); // Izsauc lēcienu automātiski!
+    }
+
+    // Drošības barjera parastajai fizikai (ja nav nopirkts uzlabojums)
     if (pepe.y + pepe.radius >= canvas.height) {
         pepe.y = canvas.height - pepe.radius; pepe.velocity = pepe.jump;
     }
