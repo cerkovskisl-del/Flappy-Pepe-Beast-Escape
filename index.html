@@ -10,51 +10,59 @@
 
     <div class="main-container">
         <div class="game-area">
-            <h1>Pepe vs MrBeast</h1>
+            <h1 id="game-title">Pepe vs MrBeast</h1>
             <canvas id="gameCanvas" width="400" height="600"></canvas>
-            <div class="controls-info">Spied <span class="key">Spacebar</span> vai klikšķini uz spēles, lai lidotu</div>
+            <div class="controls-info" id="controls-text">Spied <span class="key">Spacebar</span> vai klikšķini uz spēles, lai lidotu</div>
         </div>
 
         <div class="shop-panel">
-            <h2>VEIKALS (UPGRADES)</h2>
-            <div class="wallet">Tavs Zelts: <span id="gold-count">0</span></div>
+            <div class="shop-top-bar">
+                <select id="lang-select">
+                    <option value="lv">Latviešu 🇱🇻</option>
+                    <option value="en">English 🇬🇧</option>
+                </select>
+                <button id="btn-reset" class="reset-btn">Reset 🔄</button>
+            </div>
+
+            <h2 id="shop-title">VEIKALS (UPGRADES)</h2>
+            <div class="wallet"><span id="wallet-text">Tavs Zelts:</span> <span id="gold-count">0</span></div>
             
             <div class="shop-item">
-                <h3>Zelta Multiplikators</h3>
-                <p>Dod vairāk zelta par katru lecienu.</p>
+                <h3 id="up1-title">Zelta Multiplikators</h3>
+                <p id="up1-desc">Dod vairāk zelta par katru lecienu.</p>
                 <button id="btn-upgrade-lec" class="shop-btn">Uzlabot (Lvl 1)<br>Cena: 50</button>
             </div>
 
             <div class="shop-item">
-                <h3>Subu Atņemšana (Damage)</h3>
-                <p>Noņem vairāk sekotāju par katriem vārtiem.</p>
+                <h3 id="up2-title">Subu Atņemšana (Damage)</h3>
+                <p id="up2-desc">Noņem vairāk sekotāju par katriem vārtiem.</p>
                 <button id="btn-upgrade-varti" class="shop-btn">Uzlabot (Lvl 1)<br>Cena: 150</button>
             </div>
 
             <div class="shop-item">
-                <h3>Zelta Raktuves (Pasīvais)</h3>
-                <p>Automātiski ražo zeltu katru sekundi.</p>
+                <h3 id="up3-title">Zelta Raktuves (Pasīvais)</h3>
+                <p id="up3-desc">Automātiski ražo zeltu katru sekundi.</p>
                 <button id="btn-upgrade-pasivs" class="shop-btn">Uzlabot (Lvl 0)<br>Cena: 100</button>
             </div>
 
             <div class="shop-item">
-                <h3>Pasīvais Damage (Sekundē)</h3>
-                <p>Automātiski atņem subus katru sekundi.</p>
+                <h3 id="up4-title">Pasīvais Damage (Sekundē)</h3>
+                <p id="up4-desc">Automātiski atņem subus katru sekundi.</p>
                 <button id="btn-upgrade-dmg-sec" class="shop-btn">Uzlabot (Lvl 0)<br>Cena: 200</button>
             </div>
 
             <div class="shop-item">
-                <h3>Auto Jumper</h3>
-                <p>Automātiski palecina Pepi pirms zemes.</p>
+                <h3 id="up5-title">Auto Jumper</h3>
+                <p id="up5-desc">Automātiski palecina Pepi pirms zemes.</p>
                 <button id="btn-upgrade-jumper" class="shop-btn">PIRKT<br>Cena: 1 000 000</button>
             </div>
             
             <div class="shop-stats">
-                <p>Lēciens dod: +<span id="stat-gold">1</span> zeltu</p>
-                <p>Vārti maina: <span id="stat-dmg">1</span> subus</p>
-                <p>Pasīvais ienākums: +<span id="stat-pasivs">0</span> zelta/sek</p>
-                <p>Pasīvais damage: -<span id="stat-dmg-sec">0</span> subs/sek</p>
-                <p>Auto Jumper: <span id="stat-jumper" style="font-weight:bold; color:#ff4a4a;">NAV NOPIRKTS</span></p>
+                <p><span id="stat1-text">Lēciens dod:</span> +<span id="stat-gold">1</span></p>
+                <p><span id="stat2-text">Vārti maina:</span> <span id="stat-dmg">1</span></p>
+                <p><span id="stat3-text">Pasīvais ienākums:</span> +<span id="stat-pasivs">0</span>/sek</p>
+                <p><span id="stat4-text">Pasīvais damage:</span> -<span id="stat-dmg-sec">0</span>/sek</p>
+                <p>Auto Jumper: <span id="stat-jumper" style="font-weight:bold;">NAV NOPIRKTS</span></p>
             </div>
         </div>
     </div>
