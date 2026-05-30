@@ -3,20 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flappy Pepe vs MrBeast</title>
+    <title>Pepe vs MrBeast Boss Fight</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="game-wrapper">
-        <h1>Flappy Pepe vs MrBeast</h1>
-        
-        <div class="game-container">
+    <div class="main-container">
+        <div class="game-area">
+            <h1>Pepe vs MrBeast</h1>
             <canvas id="gameCanvas" width="400" height="600"></canvas>
+            <div class="controls-info">Spied <span class="key">Spacebar</span> vai klikšķini uz spēles, lai lidotu</div>
         </div>
 
-        <div class="controls-info">
-            Spied <span class="key">Spacebar</span> vai klikšķini, lai lidotu / restartētu
+        <div class="shop-panel">
+            <h2>VEIKALS (UPGRADES)</h2>
+            <div class="wallet">Tavs Zelts: <span id="gold-count">0</span></div>
+            
+            <div class="shop-item">
+                <h3>Zelta Multiplikators</h3>
+                <p>Dod vairāk zelta par katru lecienu.</p>
+                <button id="btn-upgrade-lec" class="shop-btn">Uzlabot (Lvl 1)<br>Cena: 50</button>
+            </div>
+
+            <div class="shop-item">
+                <h3>Subu Atņemšana (Damage)</h3>
+                <p>Noņem vairāk sekotāju MrBeast par katriem vārtiem.</p>
+                <button id="btn-upgrade-varti" class="shop-btn">Uzlabot (Lvl 1)<br>Cena: 150</button>
+            </div>
+            
+            <div class="shop-stats">
+                <p>Lēciens dod: +<span id="stat-gold">1</span> zeltu</p>
+                <p>Vārti noņem: -<span id="stat-dmg">1</span> subu</p>
+            </div>
         </div>
     </div>
 
