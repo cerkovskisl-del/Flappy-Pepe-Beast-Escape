@@ -4,7 +4,7 @@ const ctx = canvas.getContext("2d");
 // --- VALODU TULKOJUMI ---
 const t = {
     lv: {
-        controls: 'Spied <span class="key">Spacebar</span> vai klikšķini uz spēles, lai lidotu',
+        controls: 'Spied <span class="key">Spacebar</span> vai pieskaries ekrānam, lai lidotu',
         shopTitle: "VEIKALS (UPGRADES)",
         wallet: "Tavs Zelts:",
         up1Title: "Zelta Multiplikators", up1Desc: "Dod vairāk zelta par katru lecienu.",
@@ -17,7 +17,7 @@ const t = {
         jumperActive: "AKTĪVS", jumperNot: "NAV NOPIRKTS", winTitle: "PEPE UZVARĒJA!", winDesc: "MrBeast zaudēja visus sekotājus!"
     },
     en: {
-        controls: 'Press <span class="key">Spacebar</span> or click on the game to fly',
+        controls: 'Press <span class="key">Spacebar</span> or touch the screen to fly',
         shopTitle: "SHOP (UPGRADES)",
         wallet: "Your Gold:",
         up1Title: "Gold Multiplier", up1Desc: "Gives more gold per single jump.",
@@ -99,13 +99,22 @@ btnReset.addEventListener("click", () => {
     }
 });
 
-// Vadība
+// --- VADĪBA (DATORAM UN MOBILAJĀM IERĪCĒM) ---
+// Datora klikšķis
 canvas.addEventListener("click", () => PepeLec());
+
+// Telefona skāriens (Touch) - Novērš zoom un lapas raustīšanos
+canvas.addEventListener("touchstart", (e) => {
+    e.preventDefault(); 
+    PepeLec();
+}, { passive: false });
+
+// Datora tastatūra
 window.addEventListener("keydown", (e) => {
     if (e.code === "Space") { e.preventDefault(); PepeLec(); }
 });
 
-// Pogu klikšķi
+// Pogu klikšķi veikalā
 btnLec.addEventListener("click", () => {
     let cena = cenasLec(); if (points >= cena) { points -= cena; upgradeLecLimenis++; saglabatDatus(); atjaunotVeikaluUI(); }
 });
